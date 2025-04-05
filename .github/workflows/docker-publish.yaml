@@ -1,9 +1,10 @@
-name: Build and Push Docker Image with Semantic Tag
+name: Build and Push Docker Image with Semantic Versioning
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v*.*.*'  # Só roda quando fizer push de tag tipo v1.2.3
+  workflow_dispatch:  # Permite rodar manualmente
 
 jobs:
   build-and-push:
@@ -13,12 +14,12 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v3
 
-      - name: Setup Node (para ler package.json)
+      - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      - name: Extração da versão server do package.json
+      - name: Extração da versão do package.json
         id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
@@ -29,12 +30,18 @@ jobs:
 
       - name: Build da imagem Docker
         run: |
-          docker build -t cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }}
-          docker tag cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} 
-          docker tag cleversantoro/infnet-guia-app:latest
+          docker build -t cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} .
+          docker tag cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} cleversantoro/infnet-guia-app:latest
 
-
-      - name: Push da imagem com tag semântica e latest
+      - name: Push das imagens
         run: |
           docker push cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }}
           docker push cleversantoro/infnet-guia-app:latest
+
+      - name: Criar release no GitHub (opcional)
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
