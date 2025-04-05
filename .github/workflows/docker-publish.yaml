@@ -29,10 +29,12 @@ jobs:
 
       - name: Build da imagem Docker
         run: |
-          docker build -t cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} .
-          docker tag cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} cleversantoro/infnet-guia-app:1.2
+          docker build -t cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }}
+          docker tag cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} 
+          docker tag cleversantoro/infnet-guia-app:latest
+
 
       - name: Push da imagem com tag semântica e latest
         run: |
           docker push cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }}
-          docker push cleversantoro/infnet-guia:1.2
+          docker push cleversantoro/infnet-guia-app:latest

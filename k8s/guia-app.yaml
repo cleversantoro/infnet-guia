@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: infnet-guia-app
-          image: cleversantoro/infnet-guia-app:1.2 # não recomendado, só usando latest pra desenvolvimento
+          image: cleversantoro/infnet-guia-app:latest # não recomendado, só usando latest pra desenvolvimento
           ports:
             - containerPort: 3000
           resources:
