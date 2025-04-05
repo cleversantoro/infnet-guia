@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Extração da versão semver do package.json
+      - name: Extração da versão server do package.json
         id: version
         run: |
           VERSION=$(node -p "require('./package.json').version")
@@ -29,10 +29,10 @@ jobs:
 
       - name: Build da imagem Docker
         run: |
-          docker build -t raphaeltorresinfnet/infnet-guia:${{ steps.version.outputs.version_tag }} .
-          docker tag raphaeltorresinfnet/infnet-guia:${{ steps.version.outputs.version_tag }} raphaeltorresinfnet/infnet-guia:latest
+          docker build -t cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} .
+          docker tag cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }} cleversantoro/infnet-guia-app:1.2
 
       - name: Push da imagem com tag semântica e latest
         run: |
-          docker push raphaeltorresinfnet/infnet-guia:${{ steps.version.outputs.version_tag }}
-          docker push raphaeltorresinfnet/infnet-guia:latest
+          docker push cleversantoro/infnet-guia-app:${{ steps.version.outputs.version_tag }}
+          docker push cleversantoro/infnet-guia:1.2

@@ -38,8 +38,19 @@ Siga os comandos a seguir para iniciar o minikube e fazer o deploy da aplicaçã
 # Iniciar o minikube
 minikube start
 
+
+# Criar e subir sua imagem no Docker Hub
+docker tag infnet-guia-app [usuarioDockerHub]/infnet-guia-app:1.2
+docker push [usuarioDockerHub/infnet-guia-app:1.2]
+
 # Levantar Deployment
 kubectl apply -f guia-app.yaml
+
+# Verificar Deployment
+kubectl get deployments
+kubectl get pods
+kubectl describe deployment infnet-guia-app
+minicube tunnel - se estiver usando minikube com docker 
 
 # Redirecionar a porta do service no minikupe para localhost:3000
 kubectl port-forward svc/guia-app-service 3000:3000

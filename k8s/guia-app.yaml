@@ -1,22 +1,29 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: guia-app
+  name: infnet-guia-app
 spec:
   replicas: 4
   selector:
     matchLabels:
-      app: guia-app
+      app: infnet-guia-app
   template:
     metadata:
       labels:
-        app: guia-app
+        app: infnet-guia-app
     spec:
       containers:
-        - name: guia-app
-          image: raphaeltorresinfnet/infnet-guia:latest # não recomendado, só usando latest pra desenvolvimento
+        - name: infnet-guia-app
+          image: cleversantoro/infnet-guia-app:1.2 # não recomendado, só usando latest pra desenvolvimento
           ports:
             - containerPort: 3000
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "250m"
+            limits:
+              memory: "256Mi"
+              cpu: "500m"
           readinessProbe:
             httpGet:
               path: /
@@ -33,11 +40,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: guia-app-service
+  name: infnet-guia-app-service
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
-    app: guia-app
+    app: infnet-guia-app
   ports:
     - protocol: TCP
       port: 3000

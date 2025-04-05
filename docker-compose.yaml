@@ -9,9 +9,47 @@ services:
     stdin_open: true
     ports:
       - 3000:3000
+  
   database:
     extends:
       file: docker-compose.database.yaml
       service: database
+
+  prometheus: 
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - 9090:9090
+    volumes:
+      - ./monitoring:/etc/prometheus
+    networks:
+      - monitor-net
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3001:3000
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - monitor-net
+
+  k6:
+    image: grafana/k6
+    container_name: k6
+    command: run /scripts/test.js
+    volumes:
+      - ./k6:/scripts
+    networks:
+      - monitor-net
+    # Execute manual ou use um entrypoint/script pra rodar do jeito certo
 volumes:
-  mysql_data:       
+  mysql_data:
+  grafana_data:
+
+networks:
+  monitor-net:
+    driver: bridge
