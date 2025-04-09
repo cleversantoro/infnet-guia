@@ -2,9 +2,10 @@ name: Build and Push Docker Image with Semantic Versioning
 
 on:
   push:
-    tags:
-      - 'v*.*.*'  # Só roda quando fizer push de tag tipo v1.2.3
-  workflow_dispatch:  # Permite rodar manualmente
+    branches: 
+      - main
+    paths-ignore:
+      - 'k8s/**'
 
 jobs:
   build-and-push:
