@@ -33,16 +33,17 @@ spec:
             periodSeconds: 10
           livenessProbe:
             httpGet:
-              path: /
+              path: /api/health
               port: 3000
             initialDelaySeconds: 10
             periodSeconds: 15
-
+            timeoutSeconds: 3
+            failureThreshold: 3
 --- # infnet-guia-app service
 apiVersion: v1
 kind: Service
 metadata:
-  name: infnet-guia-app-service
+  name: infnet-guia-app-svc
 spec:
   type: LoadBalancer
   selector:
@@ -72,7 +73,7 @@ spec:
         - name: grafana
           image: grafana/grafana:latest
           ports:
-            - containerPort: 3002
+            - containerPort: 3000
           resources:
             requests:
               memory: "128Mi"
@@ -85,7 +86,7 @@ spec:
               mountPath: /var/lib/grafana
       volumes:
         - name: grafana-storage
-          emptyDir: {} # usar PersistentVolumeClaim em produção
+          #emptyDir: {} # usar PersistentVolumeClaim em produção
 --- #grafana service
 apiVersion: v1
 kind: Service
@@ -96,9 +97,39 @@ spec:
   selector:
     app: grafana
   ports:
-    - port: 3002
-      targetPort: 3002
+    - port: 3000
+      targetPort: 3000
       nodePort: 30001
+--- # ConfigMap for Grafana datasource
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource
+  namespace: default
+  labels:
+    grafana_datasource: "1"
+data:
+  datasource.yaml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus-svc.default.svc.cluster.local:9090
+        isDefault: true
+        editable: true
+--- # PersistentVolume for Grafana      
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
 
 --- #prometheus
 apiVersion: apps/v1
@@ -146,14 +177,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: prometheus
+  name: prometheus-svc
 spec:
   selector:
     app: prometheus
   ports:
     - port: 9090
       targetPort: 9090
-  type: LoadBalancer
+  type: NodePort
 --- # ConfigMap for Prometheus configurations
 apiVersion: v1
 kind: ConfigMap
@@ -167,16 +198,72 @@ data:
       - job_name: 'infnet-guia-app'
         metrics_path: /api/metrics
         static_configs:
-          - targets: ['infnet-guia-app-service.default.svc.cluster.local:3000']
-
+          - targets: ['infnet-guia-app-svc.default.svc.cluster.local:3000']
 --- # PersistentVolume for Prometheus
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: prometheus-pvc
+  namespace: default
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 1Gi           
+      storage: 2Gi    
+
+--- # ConfigMap for k6 script
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-stress-test
+  namespace: default
+spec:
+  template:
+    spec:
+      containers:
+      - name: k6
+        image: ghcr.io/grafana/k6:latest
+        command: ["k6", "run", "/scripts/stress-test.js"]
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "250m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        volumeMounts:
+        - name: k6-scripts
+          mountPath: /scripts
+      restartPolicy: Never
+      volumes:
+      - name: k6-scripts
+        configMap:
+          name: k6-script
+  backoffLimit: 0   
+--- # ConfigMap for k6 script  
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: k6-script
+  namespace: default
+data:
+  stress-test.js: |
+    import http from 'k6/http';
+    import { check, sleep } from 'k6';
+
+    export let options = {
+      vus: 100,
+      duration: '2m',
+      thresholds: {
+        http_req_failed: ['rate<0.05'],
+        http_req_duration: ['p(95)<1000'],
+      },
+    };
+
+    export default function () {
+      const res = http.get('http://192.168.49.2:30080/api/process');
+      check(res, {
+        'status is 200': (r) => r.status === 200,
+      });
+    }          
