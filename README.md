@@ -40,8 +40,8 @@ minikube start
 
 
 # Criar e subir sua imagem no Docker Hub
-docker tag infnet-guia-app [usuarioDockerHub]/infnet-guia-app:1.2
-docker push [usuarioDockerHub/infnet-guia-app:1.2]
+docker tag infnet-guia-app [usuarioDockerHub]/infnet-guia-app:latest
+docker push [usuarioDockerHub]/infnet-guia-app:latest
 
 # Levantar Deployment
 kubectl apply -f guia-app.yaml
