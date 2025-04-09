@@ -160,19 +160,15 @@ kind: ConfigMap
 metadata:
   name: prometheus-config
 data:
-  prometheus.yml: |
+ prometheus.yml: |
     global:
       scrape_interval: 15s
-
     scrape_configs:
-    
-      - job_name: 'prometheus'
+      - job_name: 'infnet-guia-app'
+        metrics_path: /api/metrics
         static_configs:
-          - targets: ['prometheus:9090']
+          - targets: ['infnet-guia-app-service.default.svc.cluster.local:3000']
 
-      - job_name: 'node'
-        static_configs:
-          - targets: ['node-exporter:9100']  
 --- # PersistentVolume for Prometheus
 apiVersion: v1
 kind: PersistentVolumeClaim
