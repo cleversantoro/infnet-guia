@@ -1,6 +1,6 @@
 {
-  "name": "my-v0-project",
-  "version": "v1.0.7",
+  "name": "infnet-guia-app",
+  "version": "v1.0.8",
   "private": true,
   "packageManager": "pnpm@10.5.2",
   "scripts": {
